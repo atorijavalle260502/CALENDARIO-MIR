@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Repaso MIR</title>
+<meta name="description" content="Calendario diario para repasar las preguntas de MIR 2022 a MIR 2025.">
+<meta name="theme-color" content="#EEF3F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E181B" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Repaso MIR">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;padding:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: una columna estrecha. Resumen arriba, panel del día elegido, calendario por meses debajo, ajustes al final. */
+:root{
+  --bg:#EEF3F4; --surface:#FFFFFF; --surface-2:#E3EBED; --ink:#13272C; --muted:#586D73; --line:#CBD8DB;
+  --accent:#0B7A78; --accent-ink:#FFFFFF; --accent-soft:#D3EBEA;
+  --warn:#8F5200; --warn-soft:#FBE7C2; --extra:#2457C5; --extra-soft:#DCE6FB;
+  --star:#8A3B7A; --star-soft:#F4DEEF;
+  --font-display:"Bricolage Grotesque","IBM Plex Sans",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E181B; --surface:#152227; --surface-2:#1C2E34; --ink:#E3EEF0; --muted:#8CA3A9; --line:#2A3F46;
+    --accent:#46C3BF; --accent-ink:#06201F; --accent-soft:#17403F;
+    --warn:#F0B35A; --warn-soft:#3F2F12; --extra:#8FB0FF; --extra-soft:#1B2C54;
+    --star:#E9A3DA; --star-soft:#472243;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E181B; --surface:#152227; --surface-2:#1C2E34; --ink:#E3EEF0; --muted:#8CA3A9; --line:#2A3F46;
+  --accent:#46C3BF; --accent-ink:#06201F; --accent-soft:#17403F;
+  --warn:#F0B35A; --warn-soft:#3F2F12; --extra:#8FB0FF; --extra-soft:#1B2C54;
+  --star:#E9A3DA; --star-soft:#472243;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+/* iPhone */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+button,select,input,summary{touch-action:manipulation}
+input,select,textarea{font-size:16px}
+
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:15px; line-height:1.45;
+  padding-block:20px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+#wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spacing:-0.01em}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+
+header .eyebrow,.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 4px;font-weight:500}
+h1{font-size:30px;line-height:1.1;font-weight:700}
+
+/* resumen */
+.summary{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stat .v{font-family:var(--font-mono);font-weight:600;font-size:20px;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:13px;color:var(--muted);font-weight:400}
+.stat .l{font-size:12px;color:var(--muted)}
+.bar{display:flex;gap:3px}
+.bar .seg{position:relative;height:10px;background:var(--surface-2);border-radius:3px;overflow:hidden;min-width:0}
+.bar .seg i{position:absolute;inset:0 auto 0 0;background:var(--accent)}
+.barlabels{display:flex;gap:3px;margin-top:4px}
+.barlabels span{font-size:11px;color:var(--muted);font-family:var(--font-mono);min-width:0;white-space:nowrap}
+
+/* panel del dia */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.panel h2{font-size:22px;font-weight:700}
+.panel h2::first-letter{text-transform:uppercase}
+.panel h2 span{text-transform:none}
+.segs{display:flex;flex-direction:column;gap:6px}
+.segline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.segline .ex{font-size:13px;color:var(--muted);min-width:76px}
+.segline .nums{font-family:var(--font-mono);font-weight:600;font-size:26px;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+.count{font-size:14px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--surface-2);color:var(--ink)}
+.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.pill.short{background:var(--warn-soft);color:var(--warn)}
+.pill.over{background:var(--extra-soft);color:var(--extra)}
+.pill.pend{background:var(--warn-soft);color:var(--warn)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 14px;font-weight:500;min-height:42px}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.primary:hover{filter:brightness(1.07);background:var(--accent)}
+.btn.warn{border-color:var(--warn);color:var(--warn)}
+.btn.extra{border-color:var(--extra);color:var(--extra)}
+.btn.ghost{border-color:transparent;color:var(--muted)}
+.form{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.form label{font-size:13px;color:var(--muted)}
+.frow{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.frow>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+select,input[type=number]{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 10px;min-height:42px;min-width:0}
+input[type=number]{width:90px;font-family:var(--font-mono)}
+.err{color:var(--warn);font-size:13px;margin:0;min-height:0}
+
+/* calendario */
+.month h3{font-size:17px;font-weight:700;margin-bottom:8px;text-transform:capitalize}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dow{font-size:11px;color:var(--muted);text-align:center;font-weight:500;padding-bottom:2px}
+.cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;
+  border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 2px 5px;min-height:62px;min-width:0;text-align:center}
+.cell .dn{font-size:11px;color:var(--muted);font-weight:500;align-self:flex-start;padding-left:3px;line-height:1.2}
+.cell .ln{display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.cell .tg{font-size:9px;color:var(--muted);font-family:var(--font-mono)}
+.cell .rg{font-family:var(--font-mono);font-size:10px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-0.03em;white-space:nowrap}
+.cell .mk{position:absolute;top:2px;right:4px;font-size:10px;font-weight:700;font-family:var(--font-mono)}
+.cell.rest{background:repeating-linear-gradient(135deg,var(--bg) 0 5px,var(--surface-2) 5px 6px);border-style:dashed}
+.cell.rest .rg{color:var(--muted);font-weight:400}
+.cell.done{background:var(--accent-soft);border-color:transparent}
+.cell.done .mk{color:var(--accent)}
+.cell.short{background:var(--warn-soft);border-color:transparent}
+.cell.short .mk{color:var(--warn)}
+.cell.over{background:var(--extra-soft);border-color:transparent}
+.cell.over .mk{color:var(--extra)}
+.cell.pending{border-color:var(--warn)}
+.cell.pending::after{content:"";position:absolute;left:4px;bottom:4px;width:5px;height:5px;border-radius:50%;background:var(--warn)}
+.cell.exam{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cell.exam .dn{color:var(--bg);opacity:.8}
+.cell.today{box-shadow:0 0 0 2px var(--ink)}
+.cell.sel{outline:2px solid var(--accent);outline-offset:1px}
+.cell.blank{visibility:hidden;border:0}
+.legend{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 14px;margin:0}
+
+/* preguntas interesantes */
+.stars{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.stars .sh{font-size:13px;color:var(--muted)}
+.stars .sh b{color:var(--ink);font-weight:600}
+.chiprow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chiprow .ex{font-size:12px;color:var(--muted);min-width:70px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:8px;min-width:44px;min-height:40px;padding:4px 8px;font-family:var(--font-mono);font-weight:500;font-size:14px;font-variant-numeric:tabular-nums}
+.chip:hover{background:var(--surface-2)}
+.chip.on{background:var(--star-soft);border-color:var(--star);color:var(--star);font-weight:600}
+.chip.on::before{content:"★ "}
+.starlist{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.starlist h3{font-size:17px;font-weight:700}
+details.settings{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+details.settings summary{cursor:pointer;font-weight:500}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0}
+.sgrid>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.sgrid input{width:100%}
+#sync{font-size:12px;color:var(--muted);text-align:center}
+</style>
+
+<div id="wrap">
+  <header>
+    <p class="eyebrow">Preguntas de MIR 2022 a MIR 2025</p>
+    <h1>Repaso MIR</h1>
+  </header>
+  <div id="app"></div>
+  <p id="sync"></p>
+</div>
+
+<script>
+(function(){
+  var START='2026-10-30', END='2027-01-22', EXAM='2027-01-23';
+  var DEFAULT_REST=['2026-12-24','2026-12-25','2026-12-31','2027-01-01','2027-01-02'];
+  var DEFAULTS={base:64,sizes:[210,210,210,210],log:{},off:[],on:[],stars:[]};
+  var MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+  function pad(n){return String(n).padStart(2,'0')}
+  function key(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+  function parse(k){var p=k.split('-').map(Number);return new Date(p[0],p[1]-1,p[2],12)}
+  function addDays(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x}
+  function clone(o){return JSON.parse(JSON.stringify(o))}
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+
+  var DAYS=[];
+  for(var d=parse(START);key(d)<=END;d=addDays(d,1))DAYS.push(key(d));
+  var ALL=DAYS.concat([EXAM]);
+  var TODAY=key(new Date());
+  var sel=TODAY<START?START:(TODAY>EXAM?EXAM:TODAY);
+
+  var SEED={"base":64,"log":{"2026-10-30":{"end":76,"planned":76},"2026-10-31":{"end":76,"planned":88},"2026-11-02":{"end":88,"planned":88},"2026-11-03":{"end":100,"planned":100},"2026-11-04":{"end":112,"planned":112},"2026-11-05":{"end":112,"planned":124},"2026-11-06":{"end":112,"planned":124},"2026-11-07":{"end":112,"planned":124}},"off":[],"on":[],"sizes":[210,210,210,210],"stars":["0-23","0-27","0-28","0-30","0-48","0-64","0-72","0-82","0-87","0-101","0-107","0-108"]};
+  var state=normalize(SEED), db=null, form=null, settingsOpen=false, C=null, writeChain=Promise.resolve();
+  var app=document.getElementById('app'), syncEl=document.getElementById('sync');
+
+  function normalize(d){
+    var o=clone(DEFAULTS);
+    if(d){
+      if(typeof d.base==='number')o.base=d.base;
+      if(Array.isArray(d.sizes)&&d.sizes.length===4)o.sizes=d.sizes.map(Number);
+      if(d.log&&typeof d.log==='object')o.log=clone(d.log);
+      if(Array.isArray(d.off))o.off=d.off.slice();
+      if(Array.isArray(d.on))o.on=d.on.slice();
+      if(Array.isArray(d.stars))o.stars=d.stars.filter(function(x){return typeof x==='string'&&/^[0-3]-\d+$/.test(x)});
+    }
+    return o;
+  }
+
+  function isStudy(k,s){
+    if(s.on.indexOf(k)>=0)return true;
+    if(s.off.indexOf(k)>=0)return false;
+    if(parse(k).getDay()===0||parse(k).getDay()===6)return false;
+    if(DEFAULT_REST.indexOf(k)>=0)return false;
+    return true;
+  }
+  function offsetOf(e,s){var o=0;for(var i=0;i<e;i++)o+=s.sizes[i];return o}
+  function totalOf(s){return s.sizes.reduce(function(a,b){return a+b},0)}
+  function locate(g,s){
+    var rest=g;
+    for(var e=0;e<4;e++){ if(rest<=s.sizes[e]||e===3)return {e:e,n:rest}; rest-=s.sizes[e]; }
+  }
+  function segments(a,b,s){
+    var out=[];
+    if(b<a)return out;
+    for(var e=0;e<4;e++){
+      var lo=offsetOf(e,s)+1, hi=offsetOf(e,s)+s.sizes[e];
+      var x=Math.max(a,lo), y=Math.min(b,hi);
+      if(x<=y)out.push({e:e,a:x-lo+1,b:y-lo+1});
+    }
+    return out;
+  }
+  function rng(a,b){return a===b?String(a):a+'–'+b}
+  function locText(g,s){ if(g<=0)return 'sin empezar'; var L=locate(g,s); return 'MIR '+(2022+L.e)+' · '+L.n }
+
+  function compute(s){
+    var total=totalOf(s);
+    var left=new Array(DAYS.length+1).fill(0);
+    for(var i=DAYS.length-1;i>=0;i--){
+      var k=DAYS[i];
+      left[i]=left[i+1]+((!s.log[k]&&isStudy(k,s))?1:0);
+    }
+    var pos=Math.min(s.base,total), done=pos, res={}, finish=null;
+    DAYS.forEach(function(k,i){
+      var L=s.log[k], r;
+      if(L){
+        var end=Math.max(pos,Math.min(L.end,total));
+        r={type:'logged',pre:pos,start:pos+1,end:end,count:end-pos,planned:L.planned};
+        pos=end; done=end;
+      } else if(isStudy(k,s)){
+        var q=left[i]>0?Math.max(0,Math.ceil((total-pos)/left[i])):0;
+        r={type:'plan',pre:pos,start:pos+1,end:pos+q,count:q};
+        pos+=q;
+      } else {
+        r={type:'rest',pre:pos};
+      }
+      if(!finish&&r.count>0&&r.end>=total)finish=k;
+      res[k]=r;
+    });
+    var cushion=0;
+    if(finish){ DAYS.forEach(function(k){ if(k>finish&&isStudy(k,s)&&!s.log[k])cushion++; }); }
+    return {total:total,res:res,final:pos,done:done,finish:finish,cushion:cushion};
+  }
+
+  function fmtLong(k){var d=parse(k);return DIAS[d.getDay()]+' '+d.getDate()+' de '+MESES[d.getMonth()]}
+  function fmtShort(k){var d=parse(k);return d.getDate()+' '+MESES[d.getMonth()].slice(0,3)}
+
+  /* ---------- vistas ---------- */
+  function summaryHTML(){
+    var s=state,done=C.done,total=C.total,pct=Math.round(done/total*100);
+    var bar='',labels='';
+    s.sizes.forEach(function(sz,e){
+      var frac=clamp((done-offsetOf(e,s))/sz,0,1);
+      bar+='<div class="seg" style="flex:'+sz+'"><i style="width:'+(frac*100)+'%"></i></div>';
+      labels+='<span style="flex:'+sz+'">'+(2022+e)+'</span>';
+    });
+    var fin=C.final<total?'Faltan '+(total-C.final):fmtShort(C.finish||END);
+    var finL=C.final<total?'No llegas con los días que quedan':'Terminas el';
+    var cush=C.final<total?'0 días':C.cushion+(C.cushion===1?' día':' días');
+    return '<section class="summary" aria-label="Resumen">'+
+      '<div class="stats">'+
+        '<div class="stat"><div class="v">'+done+'<small> / '+total+'</small></div><div class="l">hechas · '+pct+'%</div></div>'+
+        '<div class="stat"><div class="v">'+fin+'</div><div class="l">'+finL+'</div></div>'+
+        '<div class="stat"><div class="v">'+cush+'</div><div class="l">de colchón</div></div>'+
+      '</div>'+
+      '<div><div class="bar" role="img" aria-label="'+done+' de '+total+' preguntas hechas">'+bar+'</div><div class="barlabels">'+labels+'</div></div>'+
+    '</section>';
+  }
+
+  function segHTML(a,b){
+    return segments(a,b,state).map(function(g){
+      return '<div class="segline"><span class="ex">MIR '+(2022+g.e)+'</span><span class="nums">'+rng(g.a,g.b)+'</span></div>';
+    }).join('');
+  }
+
+  function formHTML(r){
+    var over=form==='over', total=C.total;
+    var g0=over?Math.min(total,r.end+1):Math.max(1,Math.min(r.end-1,total));
+    if(!over&&r.end-1<1)g0=1;
+    var L=locate(g0,state);
+    var opts=state.sizes.map(function(sz,e){return '<option value="'+e+'"'+(e===L.e?' selected':'')+'>MIR '+(2022+e)+'</option>'}).join('');
+    var title=over?'¿Hasta qué pregunta has llegado?':'¿Dónde te has quedado?';
+    var hint=over?'Indica la última pregunta que has terminado (más allá de la planificada).':'Indica la última pregunta que terminaste hoy.';
+    return '<div class="form">'+
+      '<label for="f-num"><b>'+title+'</b> '+hint+'</label>'+
+      '<div class="frow">'+
+        '<div><label for="f-exam">Examen</label><select id="f-exam">'+opts+'</select></div>'+
+        '<div><label for="f-num">Pregunta</label><input id="f-num" type="number" inputmode="numeric" min="1" value="'+L.n+'"></div>'+
+        '<button class="btn primary" data-act="save">Guardar</button>'+
+        '<button class="btn ghost" data-act="cancel">Cancelar</button>'+
+      '</div>'+
+      (over?'':'<div><button class="btn warn" data-act="none">No he hecho ninguna</button></div>')+
+      '<p class="err" id="f-err" role="alert"></p>'+
+    '</div>';
+  }
+
+  function isStar(e,n){return state.stars.indexOf(e+'-'+n)>=0}
+  function chipHTML(e,n){
+    var on=isStar(e,n);
+    return '<button class="chip'+(on?' on':'')+'" data-act="star" data-sk="'+e+'-'+n+'" aria-pressed="'+on+'" aria-label="Pregunta '+n+' de MIR '+(2022+e)+(on?', marcada como interesante':'')+'">'+n+'</button>';
+  }
+  function starsBlock(a,b){
+    var rows=segments(a,b,state).map(function(g){
+      var chips='';
+      for(var n=g.a;n<=g.b;n++)chips+=chipHTML(g.e,n);
+      return '<div class="chiprow"><span class="ex">MIR '+(2022+g.e)+'</span>'+chips+'</div>';
+    }).join('');
+    return '<div class="stars"><div class="sh"><b>¿Cuáles te han interesado?</b> Toca el número para marcarla o quitarla.</div>'+rows+'</div>';
+  }
+  function starListHTML(){
+    var by=[[],[],[],[]];
+    state.stars.forEach(function(x){var p=x.split('-').map(Number);if(by[p[0]])by[p[0]].push(p[1])});
+    var rows='';
+    by.forEach(function(arr,e){
+      if(!arr.length)return;
+      arr.sort(function(a,b){return a-b});
+      rows+='<div class="chiprow"><span class="ex">MIR '+(2022+e)+'</span>'+arr.map(function(n){return chipHTML(e,n)}).join('')+'</div>';
+    });
+    return '<section class="starlist" aria-label="Preguntas interesantes"><h3>Interesantes · '+state.stars.length+'</h3>'+
+      (rows||'<p class="note">Aún no has marcado ninguna. Abre un día y toca los números de las que te hayan interesado.</p>')+'</section>';
+  }
+
+  function panelHTML(){
+    var k=sel, isExam=k===EXAM, label=k===TODAY?'Hoy':(k<TODAY?'Día pasado':'Día próximo');
+    var html='<section class="panel" aria-live="polite"><div><p class="eyebrow">'+label+'</p><h2>'+fmtLong(k)+'</h2></div>';
+    if(isExam){
+      return html+'<p class="note" style="font-size:15px;color:var(--ink)">Examen MIR. El repaso termina el viernes 22 de enero.</p></section>';
+    }
+    var r=C.res[k];
+    var canAct=k<=TODAY;
+    if(r.type==='rest'){
+      var why=parse(k).getDay()===0?'Domingo':(parse(k).getDay()===6?'Sábado':(DEFAULT_REST.indexOf(k)>=0?'Descanso de tu calendario':'Día libre que marcaste'));
+      html+='<p class="note" style="font-size:15px;color:var(--ink)">'+why+'. No hay preguntas asignadas.</p>';
+      if(k>=TODAY)html+='<div class="actions"><button class="btn" data-act="rest">Convertir en día de estudio</button></div>';
+      return html+'</section>';
+    }
+    if(r.type==='logged'){
+      var diff=r.end-(r.planned==null?r.end:r.planned);
+      var pill=diff===0?'<span class="pill ok">Cumplido</span>':(diff<0?'<span class="pill short">'+(-diff)+' menos de lo previsto</span>':'<span class="pill over">'+diff+' de más</span>');
+      html+='<div class="segs">'+(r.count>0?segHTML(r.start,r.end):'<div class="segline"><span class="nums">0</span></div>')+'</div>'+
+        '<div><span class="count">'+r.count+(r.count===1?' pregunta hecha':' preguntas hechas')+'</span> '+pill+'</div>';
+      if(diff!==0&&r.planned!=null)html+='<p class="note">El plan llegaba hasta '+locText(r.planned,state)+'.</p>';
+      if(r.count>0)html+=starsBlock(r.start,r.end);
+      html+='<div class="actions"><button class="btn" data-act="undo">Deshacer registro</button></div>';
+      return html+'</section>';
+    }
+    // plan
+    var pend=k<TODAY;
+    if(r.count===0){
+      html+='<p class="note" style="font-size:15px;color:var(--ink)">Colchón: no hay preguntas asignadas. Si has hecho alguna, regístrala.</p>';
+    } else {
+      html+='<div class="segs">'+segHTML(r.start,r.end)+'</div>'+
+        '<div><span class="count">'+r.count+(r.count===1?' pregunta':' preguntas')+'</span>'+(pend?' <span class="pill pend">Sin registrar</span>':'')+'</div>';
+    }
+    if(r.count>0&&canAct)html+=starsBlock(r.start,r.end);
+    if(canAct){
+      if(form){html+=formHTML(r)}
+      else{
+        html+='<div class="actions">'+
+          (r.count>0?'<button class="btn primary" data-act="done">✓ Cumplido</button>':'')+
+          (r.count>0?'<button class="btn warn" data-act="short">Me quedé en…</button>':'')+
+          '<button class="btn extra" data-act="over">Hice de más</button>'+
+        '</div>';
+      }
+    } else {
+      html+='<p class="note">Este día se ajusta solo con lo que registres en los anteriores.</p>';
+    }
+    if(k>=TODAY&&!form)html+='<div class="actions"><button class="btn ghost" data-act="rest">Marcar como descanso</button></div>';
+    return html+'</section>';
+  }
+
+  function cellHTML(k){
+    var dn=parse(k).getDate(), cls=['cell'], inner='', aria=fmtLong(k);
+    if(k===EXAM){
+      cls.push('exam');
+      inner='<span class="dn">'+dn+'</span><span class="ln"><span class="rg">MIR 26</span></span>';
+      aria+=': examen';
+    } else {
+      var r=C.res[k];
+      if(r.type==='rest'){
+        cls.push('rest');
+        inner='<span class="dn">'+dn+'</span><span class="ln"><span class="rg">desc.</span></span>';
+        aria+=': descanso';
+      } else {
+        var mk='';
+        if(r.type==='logged'){
+          var diff=r.end-(r.planned==null?r.end:r.planned);
+          if(diff===0){cls.push('done');mk='✓'}
+          else if(diff<0){cls.push('short');mk='−'+(-diff)}
+          else {cls.push('over');mk='+'+diff}
+        } else if(k<TODAY){cls.push('pending')}
+        var segs=segments(r.start,r.end,state), lines='';
+        if(r.count===0){lines='<span class="rg">'+(r.type==='logged'?'0':'libre')+'</span>'}
+        else segs.forEach(function(g){
+          lines+='<span class="tg">'+String(2022+g.e).slice(2)+'</span><span class="rg">'+rng(g.a,g.b)+'</span>';
+        });
+        inner='<span class="dn">'+dn+'</span>'+(mk?'<span class="mk">'+mk+'</span>':'')+'<span class="ln">'+lines+'</span>';
+        aria+=': '+(r.count>0?r.count+' preguntas':'sin preguntas');
+      }
+    }
+    if(k===TODAY)cls.push('today');
+    if(k===sel)cls.push('sel');
+    return '<button class="'+cls.join(' ')+'" data-act="pick" data-k="'+k+'" aria-label="'+aria+'" aria-pressed="'+(k===sel)+'">'+inner+'</button>';
+  }
+
+  function calendarHTML(){
+    var months=[],map={};
+    ALL.forEach(function(k){var m=k.slice(0,7);if(!map[m]){map[m]=[];months.push(m)}map[m].push(k)});
+    var out='';
+    months.forEach(function(m){
+      var days=map[m], first=parse(days[0]), lead=(first.getDay()+6)%7;
+      var y=m.slice(0,4), mi=Number(m.slice(5,7))-1;
+      out+='<section class="month"><h3>'+MESES[mi]+' '+y+'</h3><div class="grid">';
+      ['L','M','X','J','V','S','D'].forEach(function(x){out+='<div class="dow">'+x+'</div>'});
+      for(var i=0;i<lead;i++)out+='<div class="cell blank"></div>';
+      days.forEach(function(k){out+=cellHTML(k)});
+      out+='</div></section>';
+    });
+    out+='<p class="legend"><span>✓ cumplido</span><span>− te quedaste corto</span><span>+ de más</span><span>punto ámbar: sin registrar</span><span>cifra pequeña: examen (22 = MIR 2022)</span></p>';
+    return '<div style="display:flex;flex-direction:column;gap:18px">'+out+'</div>';
+  }
+
+  function settingsHTML(){
+    var s=state;
+    var inputs=s.sizes.map(function(sz,e){
+      return '<div><label for="s-sz'+e+'">MIR '+(2022+e)+'</label><input id="s-sz'+e+'" type="number" min="1" value="'+sz+'"></div>';
+    }).join('');
+    return '<details class="settings" id="settings"'+(settingsOpen?' open':'')+'><summary>Ajustes</summary>'+
+      '<p class="note" style="margin-top:10px">Número de preguntas de cada examen y cuántas llevabas hechas antes del 30 de octubre (contando desde la 1 de MIR 2022).</p>'+
+      '<div class="sgrid">'+inputs+'<div><label for="s-base">Hechas al empezar</label><input id="s-base" type="number" min="0" value="'+s.base+'"></div></div>'+
+      '<div class="actions"><button class="btn primary" data-act="settings">Guardar ajustes</button></div>'+
+    '</details>';
+  }
+
+  function render(){
+    var f=document.activeElement&&document.activeElement.getAttribute&&document.activeElement.getAttribute('data-k');
+    C=compute(state);
+    app.innerHTML='<div style="display:flex;flex-direction:column;gap:18px">'+summaryHTML()+panelHTML()+starListHTML()+calendarHTML()+settingsHTML()+'</div>';
+    if(f){var el=app.querySelector('[data-act="pick"][data-k="'+f+'"]');if(el)el.focus({preventScroll:true})}
+  }
+
+  /* ---------- guardado ---------- */
+  function setSync(t){syncEl.textContent=t}
+  function persist(){
+    var snapshot=clone(state);
+    writeChain=writeChain.then(function(){
+      if(db){
+        return db.doc('plan/state').set(snapshot).then(function(){setSync('Guardado')},function(){setSync('No se pudo guardar. Vuelve a intentarlo.')});
+      }
+      try{localStorage.setItem('repaso-mir-v1',JSON.stringify(snapshot));setSync('Guardado solo en este navegador')}catch(e){setSync('No se puede guardar en este navegador')}
+    });
+  }
+  function mutate(fn){
+    var n=clone(state);fn(n);state=n;render();persist();
+  }
+
+  /* ---------- acciones ---------- */
+  function logDay(k,end,planned){mutate(function(s){s.log[k]={end:end,planned:planned}})}
+
+  app.addEventListener('toggle',function(e){if(e.target.id==='settings')settingsOpen=e.target.open},true);
+  app.addEventListener('click',function(e){
+    var b=e.target.closest('[data-act]');if(!b)return;
+    var act=b.getAttribute('data-act'), r=sel===EXAM?null:C.res[sel];
+    if(act==='pick'){sel=b.getAttribute('data-k');form=null;render();return}
+    if(act==='star'){
+      var sk=b.getAttribute('data-sk');
+      mutate(function(s){var i=s.stars.indexOf(sk);if(i>=0)s.stars.splice(i,1);else s.stars.push(sk)});
+      return;
+    }
+    if(!r)return;
+    if(act==='done'){logDay(sel,r.end,r.end);form=null;return}
+    if(act==='short'||act==='over'){form=act;render();return}
+    if(act==='cancel'){form=null;render();return}
+    if(act==='none'){logDay(sel,r.pre,r.end);form=null;return}
+    if(act==='save'){
+      var ex=Number(document.getElementById('f-exam').value), n=Number(document.getElementById('f-num').value);
+      var err=document.getElementById('f-err');
+      if(!Number.isInteger(n)||n<1||n>state.sizes[ex]){err.textContent='Escribe un número entre 1 y '+state.sizes[ex]+' para MIR '+(2022+ex)+'.';return}
+      var g=offsetOf(ex,state)+n;
+      if(form==='short'){
+        if(g>=r.end){err.textContent='Eso llega o supera lo planificado. Usa «Hice de más» o «Cumplido».';return}
+        if(g<r.pre){err.textContent='Es anterior a donde empezaste hoy ('+locText(r.pre,state)+').';return}
+      } else {
+        if(g<=r.end){err.textContent='Eso no supera lo planificado'+(r.count>0?' ('+locText(r.end,state)+')':'')+'. Usa «Me quedé en…».';return}
+      }
+      logDay(sel,g,r.end);form=null;return;
+    }
+    if(act==='undo'){mutate(function(s){delete s.log[sel]});return}
+    if(act==='rest'){
+      mutate(function(s){
+        var study=isStudy(sel,s);
+        s.on=s.on.filter(function(x){return x!==sel});
+        s.off=s.off.filter(function(x){return x!==sel});
+        var defStudy=parse(sel).getDay()!==0&&parse(sel).getDay()!==6&&DEFAULT_REST.indexOf(sel)<0;
+        if(study&&defStudy)s.off.push(sel);
+        else if(!study&&!defStudy)s.on.push(sel);
+        else if(study&&!defStudy){} // ya estaba forzado y se quita arriba
+      });
+      return;
+    }
+    if(act==='settings'){
+      var sizes=[0,1,2,3].map(function(i){return Math.max(1,Math.round(Number(document.getElementById('s-sz'+i).value))||state.sizes[i])});
+      var base=Math.max(0,Math.round(Number(document.getElementById('s-base').value))||0);
+      mutate(function(s){s.sizes=sizes;s.base=base});
+      return;
+    }
+  });
+
+  render();
+
+  /* ---------- datos compartidos ---------- */
+  (async function(){
+    try{db=window.claude?await window.claude.use('db'):null}catch(e){db=null}
+    if(db){
+      setSync('Conectado');
+      db.doc('plan/state').onSnapshot(function(snap){
+        if(snap.exists){
+          var d=normalize(snap.data());
+          if(JSON.stringify(d)!==JSON.stringify(state)){state=d;render()}
+        }
+        setSync('Guardado');
+      },function(){setSync('Sin conexión con el guardado')});
+    } else {
+      try{
+        var raw=localStorage.getItem('repaso-mir-v1');
+        if(raw){state=normalize(JSON.parse(raw));render()}
+      }catch(e){}
+      setSync('Se guarda solo en este navegador');
+    }
+  })();
+})();
+</script>
+</body>
+</html>
